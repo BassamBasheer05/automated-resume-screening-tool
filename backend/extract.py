@@ -9,14 +9,22 @@ def extract_years_experience(resume_text):
 
     experience_values = []
 
+    # These descriptors may appear individually or together:
+    # "professional experience"
+    # "relevant experience"
+    # "relevant professional experience"
+    # "total work experience"
+    experience_descriptors = (
+        r"(?:(?:total|overall|professional|relevant|work)\s+)*"
+    )
+
     year_after_experience_patterns = [
         (
-            r"(?:total\s+|overall\s+|professional\s+|"
-            r"relevant\s+|work\s+)?"
-            r"experience\s*:?\s*"
-            r"(\d+(?:\.\d+)?)"
-            r"\s*\+?\s*"
-            r"(?:years|year|yrs|yr)\b"
+            experience_descriptors
+            + r"experience\s*:?\s*"
+            + r"(\d+(?:\.\d+)?)"
+            + r"\s*\+?\s*"
+            + r"(?:years|year|yrs|yr)\b"
         )
     ]
 
@@ -25,10 +33,10 @@ def extract_years_experience(resume_text):
             r"(\d+(?:\.\d+)?)"
             r"\s*\+?\s*"
             r"(?:years|year|yrs|yr)\b"
-            r"\s+(?:of\s+)?"
-            r"(?:total\s+|overall\s+|professional\s+|"
-            r"relevant\s+|work\s+)?"
-            r"(?:experience|exp)\b"
+            r"\s*(?:['’]\s*)?"
+            r"(?:of\s+)?"
+            + experience_descriptors
+            + r"(?:experience|exp)\b"
         )
     ]
 
@@ -48,12 +56,11 @@ def extract_years_experience(resume_text):
 
     month_after_experience_patterns = [
         (
-            r"(?:total\s+|overall\s+|professional\s+|"
-            r"relevant\s+|work\s+)?"
-            r"experience\s*:?\s*"
-            r"(\d+(?:\.\d+)?)"
-            r"\s*"
-            r"(?:months|month|mos|mo)\b"
+            experience_descriptors
+            + r"experience\s*:?\s*"
+            + r"(\d+(?:\.\d+)?)"
+            + r"\s*"
+            + r"(?:months|month|mos|mo)\b"
         )
     ]
 
@@ -62,10 +69,10 @@ def extract_years_experience(resume_text):
             r"(\d+(?:\.\d+)?)"
             r"\s*"
             r"(?:months|month|mos|mo)\b"
-            r"\s+(?:of\s+)?"
-            r"(?:total\s+|overall\s+|professional\s+|"
-            r"relevant\s+|work\s+)?"
-            r"(?:experience|exp)\b"
+            r"\s*(?:['’]\s*)?"
+            r"(?:of\s+)?"
+            + experience_descriptors
+            + r"(?:experience|exp)\b"
         )
     ]
 

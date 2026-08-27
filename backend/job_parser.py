@@ -10,6 +10,7 @@ REQUIRED_HEADINGS = {
     "must have",
     "must-have",
     "required qualifications",
+    "basic qualifications",
     "requirements",
     "minimum qualifications",
     "what you'll bring",
