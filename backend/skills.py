@@ -85,6 +85,151 @@ SKILL_ALIASES = {
         "postgresql",
         "postgres",
         "postgre sql"
+    ],
+
+    "etl": [
+        "etl",
+        "extract transform load"
+    ],
+
+    "nlp": [
+        "nlp",
+        "natural language processing"
+    ],
+
+"data modeling": [
+    "data modeling",
+    "data modelling",
+    "data model",
+    "data models"
+],
+
+    "data warehousing": [
+        "data warehousing",
+        "data warehouse",
+        "data warehouses"
+    ],
+
+    "data lakes": [
+        "data lake",
+        "data lakes"
+    ],
+
+    "data pipelines": [
+        "data pipeline",
+        "data pipelines",
+        "data pipeline development"
+    ],
+
+    "api integration": [
+        "api integration",
+        "api integrations",
+        "application programming interface integration",
+        "application programming interface integrations"
+    ],
+
+    "predictive analytics": [
+        "predictive analytics",
+        "predictive modeling",
+        "predictive modelling"
+    ],
+
+    "anomaly detection": [
+        "anomaly detection"
+    ],
+
+    "statistical modeling": [
+        "statistical modeling",
+        "statistical modelling"
+    ],
+
+    "uipath": [
+        "uipath",
+        "ui path"
+    ],
+
+    "rpa": [
+        "rpa",
+        "robotic process automation"
+    ],
+
+    "oracle": [
+        "oracle"
+    ],
+
+    "vba": [
+        "vba",
+        "visual basic for applications"
+    ],
+
+    "knime": [
+        "knime"
+    ],
+
+    "alteryx": [
+        "alteryx"
+    ],
+
+    "spark": [
+        "apache spark",
+        "spark"
+    ],
+
+    "scala": [
+        "scala"
+    ],
+
+    "quicksight": [
+        "quicksight",
+        "quick sight",
+        "amazon quicksight",
+        "aws quicksight",
+        "quicksuite",
+        "quick suite"
+    ],
+
+    "aws lambda": [
+        "aws lambda",
+        "amazon lambda",
+        "lambda"
+    ],
+
+    "aws glue": [
+        "aws glue",
+        "amazon glue"
+    ],
+
+    "redshift": [
+        "redshift",
+        "amazon redshift",
+        "aws redshift"
+    ],
+
+    "s3": [
+        "s3",
+        "amazon s3",
+        "aws s3"
+    ],
+
+    "sagemaker": [
+        "sagemaker",
+        "sage maker",
+        "amazon sagemaker",
+        "aws sagemaker"
+    ],
+
+    "eventbridge": [
+        "eventbridge",
+        "event bridge",
+        "amazon eventbridge",
+        "aws eventbridge"
+    ],
+
+    "step functions": [
+        "step functions",
+        "step function",
+        "aws step functions",
+        "aws step function"
     ]
 }
 
