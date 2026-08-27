@@ -558,24 +558,7 @@ export default function Home() {
                   event.target.value
                 )
               }
-              placeholder={`Data Analyst
-
-Required Skills:
-Python
-SQL
-Excel
-Power BI
-
-Preferred Skills:
-Pandas
-Tableau
-
-Experience:
-Minimum 2 years of experience...
-
-Responsibilities:
-Analyze business data.
-Create dashboards and reports.`}
+placeholder="Paste the full job description here..."
               className="w-full resize-none rounded-xl border border-slate-300 p-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
 
