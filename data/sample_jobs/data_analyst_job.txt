@@ -1,0 +1,23 @@
+Data Analyst
+
+We are looking for a Data Analyst to join our analytics team.
+
+Required Skills:
+SQL
+Excel
+Power BI
+Python
+
+Preferred Skills:
+Pandas
+Tableau
+
+Experience:
+Minimum 2 years of experience in data analysis or business intelligence.
+
+Responsibilities:
+Analyze business data.
+Create dashboards and reports.
+Work with SQL databases.
+Build reports using Excel and Power BI.
+Communicate insights to business stakeholders.

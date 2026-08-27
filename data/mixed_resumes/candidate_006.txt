@@ -1,0 +1,25 @@
+Kiran Thomas
+Business Intelligence Analyst
+
+Email: candidate6@example.com
+Phone: 9000000006
+Location: India
+
+Professional Summary:
+Business Intelligence Analyst with 3 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Power BI
+SQL
+Python
+Tableau
+Git
+Excel
+
+Experience:
+Business Intelligence Analyst with 3 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Commerce

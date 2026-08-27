@@ -1,0 +1,21 @@
+Diya Joseph
+Reporting Analyst
+
+Email: candidate2@example.com
+Phone: 9000000002
+Location: India
+
+Professional Summary:
+Reporting Analyst with 0.5 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+SQL
+Power BI
+
+Experience:
+Reporting Analyst with 0.5 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Science

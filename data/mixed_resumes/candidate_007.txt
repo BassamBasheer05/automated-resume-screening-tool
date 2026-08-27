@@ -1,0 +1,23 @@
+Isha Kumar
+Data Analyst
+
+Email: candidate7@example.com
+Phone: 9000000007
+Location: India
+
+Professional Summary:
+Data Analyst with 4 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+NumPy
+Tableau
+Excel
+AWS
+
+Experience:
+Data Analyst with 4 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Business Administration

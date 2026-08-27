@@ -1,0 +1,25 @@
+Meera Thomas
+Data Analyst
+
+Email: candidate8@example.com
+Phone: 9000000008
+Location: India
+
+Professional Summary:
+Data Analyst with 1.5 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Power BI
+Excel
+NumPy
+AWS
+Git
+Pandas
+
+Experience:
+Data Analyst with 1.5 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Science

@@ -1,0 +1,25 @@
+Carol Thomas
+Business Intelligence Analyst
+
+Email: carol.thomas@example.com
+Phone: 7777777777
+Location: Kochi, India
+
+Professional Summary:
+Business Intelligence Analyst with 2.5 years of experience creating
+reports, dashboards, and business insights.
+
+Skills:
+SQL
+Excel
+Power BI
+Tableau
+Data Analysis
+
+Experience:
+Business Intelligence Analyst - Insight Solutions
+2.5 years of experience using SQL, Excel, Power BI,
+Tableau, dashboards, reporting, and data analysis.
+
+Education:
+Bachelor of Business Administration

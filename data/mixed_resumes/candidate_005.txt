@@ -1,0 +1,25 @@
+Vikram Nair
+Business Analyst
+
+Email: candidate5@example.com
+Phone: 9000000005
+Location: India
+
+Professional Summary:
+Business Analyst with 3 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Pandas
+Python
+NumPy
+AWS
+Git
+Power BI
+
+Experience:
+Business Analyst with 3 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Commerce

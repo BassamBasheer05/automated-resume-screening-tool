@@ -1,0 +1,26 @@
+Kiran Joseph
+Data Analyst
+
+Email: candidate3@example.com
+Phone: 9000000003
+Location: India
+
+Professional Summary:
+Data Analyst with 2 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Git
+Data Analysis
+Power BI
+NumPy
+Pandas
+Excel
+Python
+
+Experience:
+Data Analyst with 2 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Science

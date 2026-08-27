@@ -1,0 +1,22 @@
+Diya Kumar
+Business Intelligence Analyst
+
+Email: candidate10@example.com
+Phone: 9000000010
+Location: India
+
+Professional Summary:
+Business Intelligence Analyst with 3 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+NumPy
+Data Analysis
+AWS
+
+Experience:
+Business Intelligence Analyst with 3 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Science

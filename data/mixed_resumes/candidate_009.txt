@@ -1,0 +1,21 @@
+Rohan Singh
+Data Analyst
+
+Email: candidate9@example.com
+Phone: 9000000009
+Location: India
+
+Professional Summary:
+Data Analyst with 2 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Tableau
+Data Analysis
+
+Experience:
+Data Analyst with 2 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Business Administration

@@ -1,0 +1,22 @@
+Rohan Nair
+Data Analyst
+
+Email: candidate1@example.com
+Phone: 9000000001
+Location: India
+
+Professional Summary:
+Data Analyst with 2.5 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Power BI
+Excel
+SQL
+
+Experience:
+Data Analyst with 2.5 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Master of Business Administration

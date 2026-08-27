@@ -1,0 +1,22 @@
+Sneha Rao
+Business Analyst
+
+Email: candidate4@example.com
+Phone: 9000000004
+Location: India
+
+Professional Summary:
+Business Analyst with 2.5 years of experience
+working with data, reporting, analytics, and business insights.
+
+Skills:
+Power BI
+Tableau
+SQL
+
+Experience:
+Business Analyst with 2.5 years of experience
+working with analytics, reporting, and data-driven decision making.
+
+Education:
+Bachelor of Commerce
