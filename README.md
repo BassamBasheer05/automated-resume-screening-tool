@@ -1,5 +1,7 @@
 # Automated Resume Screening Tool
 
+[![CI](https://github.com/BassamBasheer05/automated-resume-screening-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/BassamBasheer05/automated-resume-screening-tool/actions/workflows/ci.yml)
+
 An explainable resume-screening prototype that compares a job description against multiple resumes, ranks candidates using configurable hiring criteria, and shows recruiters why each candidate received their score.
 
 Built with **Python, FastAPI, scikit-learn, Next.js, and TypeScript**.
