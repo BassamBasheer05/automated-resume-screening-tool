@@ -19,6 +19,7 @@ A recruiter can:
 - Use TXT, PDF, or DOCX files
 - Extract candidate skills and experience
 - Identify matched and missing required skills
+- Interpret alternative requirements such as `SQL or Python` as one requirement
 - Identify matched and missing preferred skills
 - Compare candidate experience against the minimum requirement
 - Rank candidates using an explainable scoring model
@@ -43,6 +44,7 @@ Instead of returning only a ranking, the system shows:
 
 - which required skills matched
 - which required skills are missing
+- which alternative required groups were satisfied or missed
 - which preferred skills matched
 - whether minimum experience was met
 - how much each criterion contributed to the final score
@@ -61,6 +63,7 @@ Job Description
 Job Description Parser
       │
       ├── Required skills
+      ├── Alternative required skill groups
       ├── Preferred skills
       └── Minimum experience
       │
@@ -84,6 +87,7 @@ Candidate Information Extraction
 Matching Engine
       │
       ├── Required skill matching
+      ├── Alternative-group matching
       ├── Preferred skill matching
       └── Experience comparison
       │
@@ -117,6 +121,10 @@ Default weighting:
 | Preferred skills | 15% |
 | Experience | 25% |
 
+Alternative required skill groups are counted as one required requirement. For example, if a job states `SQL or Python`, a candidate can satisfy that requirement with either skill, and knowing both does not earn double credit.
+
+The parser also handles example-style lists conservatively. Technologies introduced with cues such as `such as`, `like`, `for example`, or `including` are not automatically converted into separate mandatory requirements.
+
 If a job description does not contain one of these criteria, the remaining weights are automatically normalized.
 
 For example, if a job has required skills and experience but no preferred skills, candidates are not given free points for the missing category.
@@ -130,7 +138,7 @@ The system uses recommendation categories:
 - **Review**
 - **Weak Match**
 
-A candidate who is missing a required skill or does not meet the minimum experience requirement cannot automatically receive a Strong or Good Match recommendation purely because of a high numerical score.
+A candidate who is missing a required skill, fails an alternative required skill group, or does not meet the minimum experience requirement cannot automatically receive a Strong or Good Match recommendation purely because of a high numerical score.
 
 This means recommendation priority can intentionally rank a candidate who meets all minimum requirements above a higher-scoring candidate who does not.
 
@@ -313,24 +321,29 @@ This is a configured compatibility score, **not a probability that the candidate
 
 ## Automated Testing
 
-The backend currently has **50 automated tests** covering:
+The backend currently has **72 automated tests** covering:
 
 | Area | Tests |
 |---|---:|
-| API | 8 |
+| API | 9 |
+| Basic-qualification and alternative parsing | 3 |
 | Contact extraction | 6 |
 | Experience extraction | 9 |
+| Extended skill taxonomy | 6 |
 | Job parsing | 7 |
 | Matching | 5 |
 | Ranking | 5 |
+| Required skill groups | 5 |
+| Requirement interpretation | 5 |
 | Scoring | 5 |
+| Screen/API alternative-group integration | 2 |
 | Skill extraction and normalization | 5 |
-| **Total** | **50** |
+| **Total** | **72** |
 
 Current local test result:
 
 ```text
-50 passed
+72 passed
 ```
 
 The frontend also passes:
@@ -371,12 +384,17 @@ automated-resume-screening-tool/
 │
 ├── tests/
 │   ├── test_api.py
+│   ├── test_basic_qualifications_parser.py
 │   ├── test_contact_extraction.py
 │   ├── test_experience.py
+│   ├── test_extended_skill_taxonomy.py
 │   ├── test_job_parser.py
 │   ├── test_matching.py
 │   ├── test_ranking.py
+│   ├── test_required_skill_groups.py
+│   ├── test_requirement_interpretation.py
 │   ├── test_scoring.py
+│   ├── test_screen_required_skill_groups.py
 │   └── test_skills.py
 │
 ├── .gitattributes
@@ -424,7 +442,7 @@ python -m pytest
 Expected:
 
 ```text
-50 passed
+72 passed
 ```
 
 ### 5. Start the FastAPI backend
@@ -588,6 +606,7 @@ TXT / PDF / DOCX            ✅
 Skill extraction            ✅
 Experience extraction       ✅
 JD parsing                  ✅
+Alternative skill groups    ✅
 Candidate matching          ✅
 Explainable scoring         ✅
 TF-IDF similarity           ✅
@@ -600,7 +619,7 @@ Recruiter dashboard         ✅
 Search and filtering        ✅
 Pagination                  ✅
 CSV export                  ✅
-50 backend tests            ✅
+72 backend tests            ✅
 Frontend lint               ✅
 Production frontend build   ✅
 ```
