@@ -364,6 +364,9 @@ automated-resume-screening-tool/
 ├── backend/
 │   ├── api.py
 │   ├── extract.py
+│   ├── generate_mixed_resumes.py
+│   ├── generate_portfolio_demo_resumes.py
+│   ├── generate_synthetic_resumes.py
 │   ├── ingest.py
 │   ├── job_parser.py
 │   ├── matching.py
@@ -378,6 +381,7 @@ automated-resume-screening-tool/
 │
 ├── data/
 │   ├── mixed_resumes/
+│   ├── portfolio_demo_resumes/
 │   ├── robustness_test/
 │   ├── sample_jobs/
 │   └── sample_resumes/
@@ -503,15 +507,45 @@ npm run build
 
 ## Synthetic Test Data
 
-The repository includes synthetic sample and mixed-format resumes for demonstration and testing.
+The repository includes synthetic resumes for demonstration, testing, and portfolio walkthroughs. No real candidate data is required to use the project.
 
-A larger 500-resume synthetic dataset is intentionally excluded from Git because it can be regenerated using:
+### Portfolio Demo Dataset
+
+The repository includes **18 fictional candidate resumes** in:
+
+```text
+data/portfolio_demo_resumes/
+```
+
+The dataset contains:
+
+- 6 TXT resumes
+- 6 DOCX resumes
+- 6 PDF resumes
+- varied analytics, BI, data engineering, cloud, automation, and ML skill profiles
+- experience levels ranging from junior to senior candidates
+
+Each resume is clearly labeled:
+
+```text
+Synthetic Resume - For Portfolio Demo Purposes Only
+```
+
+The dataset can be regenerated using:
+
+```bash
+python backend/generate_portfolio_demo_resumes.py
+```
+
+### Larger Load-Test Dataset
+
+A larger **500-resume synthetic dataset** is intentionally excluded from Git because it can be regenerated using:
 
 ```bash
 python backend/generate_synthetic_resumes.py
 ```
 
-Synthetic resumes should not be interpreted as real candidate data.
+The generated data is intended only for testing and demonstration. Synthetic resumes should not be interpreted as real candidate data or real hiring outcomes.
 
 ---
 
