@@ -43,6 +43,15 @@ OTHER_HEADINGS = {
 }
 
 
+EXAMPLE_CUE_PATTERNS = [
+    r"\bsuch as\b",
+    r"\bfor example\b",
+    r"\be\.g\.",
+    r"\bincluding but not limited to\b",
+    r"\blike\b"
+]
+
+
 def normalize_heading(line):
     normalized = (
         line
@@ -112,6 +121,189 @@ def extract_section_by_headings(
     )
 
 
+def append_unique_skills(
+    target,
+    skills
+):
+    for skill in skills:
+        if skill not in target:
+            target.append(
+                skill
+            )
+
+
+def find_example_cue_position(
+    text
+):
+    positions = []
+
+    for pattern in EXAMPLE_CUE_PATTERNS:
+        match = re.search(
+            pattern,
+            text,
+            re.IGNORECASE
+        )
+
+        if match:
+            positions.append(
+                match.start()
+            )
+
+    if not positions:
+        return None
+
+    return min(
+        positions
+    )
+
+
+def extract_required_skills_from_line(
+    line
+):
+    """
+    Extract hard requirements conservatively.
+
+    Skills appearing after phrases such as
+    "such as", "for example", or "like"
+    are treated as examples rather than
+    separate mandatory requirements.
+
+    Parenthetical lists containing multiple
+    technologies are treated the same way.
+    """
+
+    example_position = (
+        find_example_cue_position(
+            line
+        )
+    )
+
+    if example_position is not None:
+        requirement_text = (
+            line[
+                :example_position
+            ]
+        )
+
+        return extract_skills(
+            requirement_text
+        )
+
+    parenthetical_groups = re.findall(
+        r"\(([^()]*)\)",
+        line
+    )
+
+    parenthetical_skills = []
+
+    for group in parenthetical_groups:
+        append_unique_skills(
+            parenthetical_skills,
+            extract_skills(
+                group
+            )
+        )
+
+    if len(parenthetical_skills) >= 2:
+        requirement_text = (
+            line.split(
+                "(",
+                1
+            )[0]
+        )
+
+        return extract_skills(
+            requirement_text
+        )
+
+    return extract_skills(
+        line
+    )
+
+
+def split_section_into_items(
+    section_text
+):
+    items = []
+    current_item = None
+
+    bullet_pattern = re.compile(
+        r"^\s*[-•*]\s*"
+    )
+
+    for raw_line in section_text.splitlines():
+        if not raw_line.strip():
+            continue
+
+        is_bullet = (
+            bullet_pattern.match(
+                raw_line
+            )
+            is not None
+        )
+
+        cleaned_line = (
+            bullet_pattern.sub(
+                "",
+                raw_line
+            )
+            .strip()
+        )
+
+        if is_bullet:
+            if current_item:
+                items.append(
+                    current_item
+                )
+
+            current_item = (
+                cleaned_line
+            )
+
+        elif current_item is not None:
+            current_item = (
+                current_item
+                + " "
+                + cleaned_line
+            )
+
+        else:
+            items.append(
+                cleaned_line
+            )
+
+    if current_item:
+        items.append(
+            current_item
+        )
+
+    return items
+def extract_required_skills_from_section(
+    section_text
+):
+    required_skills = []
+
+    section_items = (
+        split_section_into_items(
+            section_text
+        )
+    )
+
+    for item in section_items:
+        item_skills = (
+            extract_required_skills_from_line(
+                item
+            )
+        )
+
+        append_unique_skills(
+            required_skills,
+            item_skills
+        )
+
+    return required_skills
+
+
 def extract_skills_from_sentences(
     job_text
 ):
@@ -129,7 +321,6 @@ def extract_skills_from_sentences(
     required_skills = []
     preferred_skills = []
 
-
     required_cues = [
         "must have",
         "should have",
@@ -142,7 +333,6 @@ def extract_skills_from_sentences(
         "proficient in"
     ]
 
-
     preferred_cues = [
         "preferred",
         "nice to have",
@@ -153,54 +343,44 @@ def extract_skills_from_sentences(
         "good to have"
     ]
 
-
     for sentence in sentences:
         lower_sentence = (
             sentence.lower()
         )
-
-        sentence_skills = (
-            extract_skills(
-                sentence
-            )
-        )
-
-        if not sentence_skills:
-            continue
-
 
         is_preferred = any(
             cue in lower_sentence
             for cue in preferred_cues
         )
 
-
         is_required = any(
             cue in lower_sentence
             for cue in required_cues
         )
 
-
         if is_preferred:
-            for skill in sentence_skills:
-                if (
-                    skill
-                    not in preferred_skills
-                ):
-                    preferred_skills.append(
-                        skill
-                    )
+            sentence_skills = (
+                extract_skills(
+                    sentence
+                )
+            )
+
+            append_unique_skills(
+                preferred_skills,
+                sentence_skills
+            )
 
         elif is_required:
-            for skill in sentence_skills:
-                if (
-                    skill
-                    not in required_skills
-                ):
-                    required_skills.append(
-                        skill
-                    )
+            sentence_skills = (
+                extract_required_skills_from_line(
+                    sentence
+                )
+            )
 
+            append_unique_skills(
+                required_skills,
+                sentence_skills
+            )
 
     return (
         required_skills,
@@ -225,9 +405,8 @@ def parse_job_description(
         )
     )
 
-
     required_skills = (
-        extract_skills(
+        extract_required_skills_from_section(
             required_section
         )
     )
@@ -237,7 +416,6 @@ def parse_job_description(
             preferred_section
         )
     )
-
 
     # If structured headings were not
     # available, use conservative
@@ -249,18 +427,15 @@ def parse_job_description(
         job_text
     )
 
-
     if not required_skills:
         required_skills = (
             sentence_required
         )
 
-
     if not preferred_skills:
         preferred_skills = (
             sentence_preferred
         )
-
 
     # A skill should not appear in both
     # categories. Required takes priority.
@@ -270,13 +445,11 @@ def parse_job_description(
         if skill not in required_skills
     ]
 
-
     minimum_experience = (
         extract_years_experience(
             job_text
         )
     )
-
 
     job_profile = {
         "required_skills":
@@ -288,7 +461,6 @@ def parse_job_description(
         "minimum_experience":
             minimum_experience
     }
-
 
     return job_profile
 
