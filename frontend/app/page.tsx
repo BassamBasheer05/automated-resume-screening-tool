@@ -30,6 +30,12 @@ type ScoreBreakdown = {
 };
 
 
+type MatchedRequiredSkillGroup = {
+  options: string[];
+  matched_skills: string[];
+};
+
+
 type Candidate = {
   candidate_name: string;
   email: string;
@@ -42,7 +48,10 @@ type Candidate = {
   recommendation: string;
   matched_required_skills: string[];
   missing_required_skills: string[];
+  matched_required_skill_groups: MatchedRequiredSkillGroup[];
+  missing_required_skill_groups: string[][];
   matched_preferred_skills: string[];
+  missing_preferred_skills?: string[];
   candidate_experience: number;
   experience_met: boolean;
 };
@@ -100,6 +109,53 @@ type RecommendationFilter =
   | "Good Match"
   | "Review"
   | "Weak Match";
+
+
+function formatSkillGroup(
+  skills: string[]
+) {
+  return skills.join(" OR ");
+}
+
+
+function formatMatchedAlternativeGroups(
+  groups: MatchedRequiredSkillGroup[]
+) {
+  if (groups.length === 0) {
+    return "None";
+  }
+
+  return groups
+    .map((group) => {
+      const requirement =
+        formatSkillGroup(
+          group.options
+        );
+
+      const matched =
+        group.matched_skills.join(
+          ", "
+        );
+
+      return `${requirement} (matched: ${matched})`;
+    })
+    .join("; ");
+}
+
+
+function formatMissingAlternativeGroups(
+  groups: string[][]
+) {
+  if (groups.length === 0) {
+    return "None";
+  }
+
+  return groups
+    .map((group) =>
+      formatSkillGroup(group)
+    )
+    .join("; ");
+}
 
 
 export default function Home() {
@@ -323,8 +379,10 @@ export default function Home() {
       "Experience Years",
       "Experience Requirement Met",
       "Required Skills Matched",
+      "Alternative Required Groups Matched",
       "Preferred Skills Matched",
       "Missing Required Skills",
+      "Missing Alternative Required Groups",
       "Required Score Contribution",
       "Preferred Score Contribution",
       "Experience Score Contribution",
@@ -339,6 +397,16 @@ export default function Home() {
             candidate.phone
               ? `\u200E${candidate.phone}`
               : "";
+
+          const matchedGroups =
+            candidate
+              .matched_required_skill_groups ??
+            [];
+
+          const missingGroups =
+            candidate
+              .missing_required_skill_groups ??
+            [];
 
           return [
             rank,
@@ -356,12 +424,18 @@ export default function Home() {
             candidate
               .matched_required_skills
               .join("; "),
+            formatMatchedAlternativeGroups(
+              matchedGroups
+            ),
             candidate
               .matched_preferred_skills
               .join("; "),
             candidate
               .missing_required_skills
               .join("; "),
+            formatMissingAlternativeGroups(
+              missingGroups
+            ),
             candidate
               .score_breakdown
               .required_skills
@@ -558,7 +632,7 @@ export default function Home() {
                   event.target.value
                 )
               }
-placeholder="Paste the full job description here..."
+              placeholder="Paste the full job description here..."
               className="w-full resize-none rounded-xl border border-slate-300 p-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
 
@@ -1205,6 +1279,75 @@ function CandidateCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const matchedGroups =
+    candidate
+      .matched_required_skill_groups ??
+    [];
+
+  const missingGroups =
+    candidate
+      .missing_required_skill_groups ??
+    [];
+
+  const hasAlternativeRequirements =
+    matchedGroups.length > 0 ||
+    missingGroups.length > 0;
+
+  const missingRequirementCount =
+    candidate
+      .missing_required_skills
+      .length +
+    missingGroups.length;
+
+  const matchedRequiredDetailParts: string[] =
+    [];
+
+  if (
+    candidate
+      .matched_required_skills
+      .length > 0
+  ) {
+    matchedRequiredDetailParts.push(
+      candidate
+        .matched_required_skills
+        .join(", ")
+    );
+  }
+
+  if (matchedGroups.length > 0) {
+    matchedRequiredDetailParts.push(
+      `${matchedGroups.length} alternative group${
+        matchedGroups.length === 1
+          ? ""
+          : "s"
+      } satisfied`
+    );
+  }
+
+  const missingRequiredDetailParts: string[] =
+    [];
+
+  if (
+    candidate
+      .missing_required_skills
+      .length > 0
+  ) {
+    missingRequiredDetailParts.push(
+      candidate
+        .missing_required_skills
+        .join(", ")
+    );
+  }
+
+  if (missingGroups.length > 0) {
+    missingRequiredDetailParts.push(
+      formatMissingAlternativeGroups(
+        missingGroups
+      )
+    );
+  }
+
+
   return (
     <div className="rounded-xl border border-slate-200 p-5">
 
@@ -1262,15 +1405,15 @@ function CandidateCard({
 
         <InfoCard
           label="Required Matched"
-          main={`${candidate.matched_required_skills.length} skills`}
+          main={
+            `${candidate.score_breakdown.required_skills.matched}/${candidate.score_breakdown.required_skills.total} requirements`
+          }
           detail={
-            candidate
-              .matched_required_skills
-              .length === 0
+            matchedRequiredDetailParts.length ===
+            0
               ? "None"
-              : candidate
-                  .matched_required_skills
-                  .join(", ")
+              : matchedRequiredDetailParts
+                  .join("; ")
           }
         />
 
@@ -1291,17 +1434,39 @@ function CandidateCard({
         <InfoCard
           label="Missing Required"
           main={
-            candidate
-              .missing_required_skills
-              .length === 0
+            missingRequirementCount === 0
               ? "None"
-              : candidate
-                  .missing_required_skills
-                  .join(", ")
+              : `${missingRequirementCount} requirement${
+                  missingRequirementCount ===
+                  1
+                    ? ""
+                    : "s"
+                }`
+          }
+          detail={
+            missingRequiredDetailParts.length ===
+            0
+              ? undefined
+              : missingRequiredDetailParts
+                  .join("; ")
           }
         />
 
       </div>
+
+
+      {hasAlternativeRequirements && (
+
+        <AlternativeRequirements
+          matchedGroups={
+            matchedGroups
+          }
+          missingGroups={
+            missingGroups
+          }
+        />
+
+      )}
 
 
       <div className="mt-4 flex flex-col gap-2 rounded-lg border border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1408,6 +1573,15 @@ function CandidateCard({
               />
 
               <DetailRow
+                label="Alternative requirements matched"
+                value={
+                  formatMatchedAlternativeGroups(
+                    matchedGroups
+                  )
+                }
+              />
+
+              <DetailRow
                 label="Preferred skills matched"
                 value={
                   candidate
@@ -1430,6 +1604,15 @@ function CandidateCard({
                     : candidate
                         .missing_required_skills
                         .join(", ")
+                }
+              />
+
+              <DetailRow
+                label="Missing alternative requirements"
+                value={
+                  formatMissingAlternativeGroups(
+                    missingGroups
+                  )
                 }
               />
 
@@ -1460,6 +1643,113 @@ function CandidateCard({
 }
 
 
+function AlternativeRequirements({
+  matchedGroups,
+  missingGroups
+}: {
+  matchedGroups: MatchedRequiredSkillGroup[];
+  missingGroups: string[][];
+}) {
+  return (
+    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+
+      <p className="text-sm font-semibold text-slate-800">
+        Alternative required skills
+      </p>
+
+      <p className="mt-1 text-xs text-slate-500">
+        Each group counts as one requirement.
+        Matching any one listed skill satisfies
+        that group.
+      </p>
+
+
+      <div className="mt-4 space-y-3">
+
+        {matchedGroups.map(
+          (group, index) => (
+
+            <div
+              key={
+                `matched-${group.options.join("-")}-${index}`
+              }
+              className="rounded-lg border border-green-200 bg-green-50 p-3"
+            >
+
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+
+                <p className="font-medium text-green-900">
+                  {
+                    formatSkillGroup(
+                      group.options
+                    )
+                  }
+                </p>
+
+                <span className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                  Satisfied
+                </span>
+
+              </div>
+
+              <p className="mt-1 text-sm text-green-800">
+                Matched by:{" "}
+                {
+                  group
+                    .matched_skills
+                    .join(", ")
+                }
+              </p>
+
+            </div>
+
+          )
+        )}
+
+
+        {missingGroups.map(
+          (group, index) => (
+
+            <div
+              key={
+                `missing-${group.join("-")}-${index}`
+              }
+              className="rounded-lg border border-amber-200 bg-amber-50 p-3"
+            >
+
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+
+                <p className="font-medium text-amber-900">
+                  {
+                    formatSkillGroup(
+                      group
+                    )
+                  }
+                </p>
+
+                <span className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                  Not satisfied
+                </span>
+
+              </div>
+
+              <p className="mt-1 text-sm text-amber-800">
+                None of the listed alternatives
+                were found in the resume.
+              </p>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+    </div>
+  );
+}
+
+
 function ScoreExplanation({
   candidate
 }: {
@@ -1481,9 +1771,11 @@ function ScoreExplanation({
 
           <p className="mt-1 text-sm text-slate-500">
             The match score is calculated
-            from required skills,
+            from required skill requirements,
             preferred skills, and
-            minimum experience.
+            minimum experience. Alternative
+            skill groups count as one
+            requirement each.
           </p>
 
         </div>
@@ -1510,7 +1802,7 @@ function ScoreExplanation({
       <div className="mt-5 grid gap-4 lg:grid-cols-3">
 
         <ScoreFactorCard
-          title="Required Skills"
+          title="Required Requirements"
           primary={
             `${breakdown.required_skills.matched}/${breakdown.required_skills.total} matched`
           }
@@ -1703,13 +1995,22 @@ function RecommendationExplanation({
 }: {
   candidate: Candidate;
 }) {
-  const hasMissingRequired =
+  const missingGroups =
+    candidate
+      .missing_required_skill_groups ??
+    [];
+
+  const hasMissingRequiredSkills =
     candidate
       .missing_required_skills
       .length > 0;
 
+  const hasMissingRequiredGroups =
+    missingGroups.length > 0;
+
   const failedMinimum =
-    hasMissingRequired ||
+    hasMissingRequiredSkills ||
+    hasMissingRequiredGroups ||
     !candidate.experience_met;
 
 
@@ -1731,7 +2032,7 @@ function RecommendationExplanation({
 
         <div className="mt-3 space-y-1 text-sm text-amber-900">
 
-          {hasMissingRequired && (
+          {hasMissingRequiredSkills && (
 
             <p>
               Missing required skill
@@ -1745,6 +2046,24 @@ function RecommendationExplanation({
                 candidate
                   .missing_required_skills
                   .join(", ")
+              }
+            </p>
+
+          )}
+
+
+          {hasMissingRequiredGroups && (
+
+            <p>
+              Missing alternative requirement
+              {missingGroups.length === 1
+                ? ""
+                : "s"}
+              :{" "}
+              {
+                formatMissingAlternativeGroups(
+                  missingGroups
+                )
               }
             </p>
 
@@ -1775,11 +2094,12 @@ function RecommendationExplanation({
       </p>
 
       <p className="mt-1 text-sm text-green-800">
-        All required skills and the
-        minimum experience requirement
-        were met. The recommendation
-        therefore follows the configured
-        score thresholds.
+        All required skill requirements,
+        including any alternative groups,
+        and the minimum experience
+        requirement were met. The
+        recommendation therefore follows
+        the configured score thresholds.
       </p>
 
     </div>

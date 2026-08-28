@@ -172,9 +172,26 @@ def screen_candidate(
                 "missing_required_skills"
             ],
 
+        "matched_required_skill_groups":
+            match_result.get(
+                "matched_required_skill_groups",
+                []
+            ),
+
+        "missing_required_skill_groups":
+            match_result.get(
+                "missing_required_skill_groups",
+                []
+            ),
+
         "matched_preferred_skills":
             match_result[
                 "matched_preferred_skills"
+            ],
+
+        "missing_preferred_skills":
+            match_result[
+                "missing_preferred_skills"
             ],
 
         "candidate_experience":
@@ -562,6 +579,16 @@ if __name__ == "__main__":
             f"{candidate['missing_required_skills']}"
         )
 
+        print(
+            f"Matched alternative groups: "
+            f"{candidate['matched_required_skill_groups']}"
+        )
+
+        print(
+            f"Missing alternative groups: "
+            f"{candidate['missing_required_skill_groups']}"
+        )
+
         breakdown = candidate[
             "score_breakdown"
         ]
@@ -571,7 +598,7 @@ if __name__ == "__main__":
         )
 
         print(
-            f"  Required skills: "
+            f"  Required requirements: "
             f"{breakdown['required_skills']['matched']}"
             f"/"
             f"{breakdown['required_skills']['total']} "
