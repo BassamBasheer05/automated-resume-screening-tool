@@ -1,0 +1,31 @@
+Isha Nair
+Synthetic Resume - For Portfolio Demo Purposes Only
+Data Analyst
+
+Email: demo.candidate10@example.com
+Phone: 9000010010
+Location: India
+
+Professional Summary:
+Data Analyst with 3.5 years of experience
+working across analytics, data-driven decision making,
+reporting, automation, and technology-enabled business solutions.
+
+Skills:
+SQL
+ETL
+Data Modeling
+Python
+Predictive Analytics
+Statistical Modeling
+Power BI
+Tableau
+QuickSight
+
+Experience:
+Data Analyst with 3.5 years of experience
+supporting analytics projects, business reporting,
+data workflows, and stakeholder decision making.
+
+Education:
+Bachelor of Science in Statistics

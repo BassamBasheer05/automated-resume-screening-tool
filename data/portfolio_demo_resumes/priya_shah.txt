@@ -1,0 +1,36 @@
+Priya Shah
+Synthetic Resume - For Portfolio Demo Purposes Only
+Machine Learning Analytics Specialist
+
+Email: demo.candidate07@example.com
+Phone: 9000010007
+Location: India
+
+Professional Summary:
+Machine Learning Analytics Specialist with 5 years of experience
+working across analytics, data-driven decision making,
+reporting, automation, and technology-enabled business solutions.
+
+Skills:
+AWS
+SQL
+ETL
+Data Modeling
+API Integration
+Python
+NLP
+Predictive Analytics
+Statistical Modeling
+Scikit-learn
+TensorFlow
+PyTorch
+SageMaker
+S3
+
+Experience:
+Machine Learning Analytics Specialist with 5 years of experience
+supporting analytics projects, business reporting,
+data workflows, and stakeholder decision making.
+
+Education:
+Master of Science in Artificial Intelligence

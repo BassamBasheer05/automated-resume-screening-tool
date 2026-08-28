@@ -1,0 +1,42 @@
+Aisha Mehta
+Synthetic Resume - For Portfolio Demo Purposes Only
+Senior Analytics Engineer
+
+Email: demo.candidate01@example.com
+Phone: 9000010001
+Location: India
+
+Professional Summary:
+Senior Analytics Engineer with 7 years of experience
+working across analytics, data-driven decision making,
+reporting, automation, and technology-enabled business solutions.
+
+Skills:
+AWS
+SQL
+ETL
+Data Modeling
+Data Warehousing
+Data Lakes
+API Integration
+Python
+UiPath
+RPA
+NLP
+Predictive Analytics
+Statistical Modeling
+Data Pipelines
+Power BI
+Tableau
+QuickSight
+Redshift
+S3
+AWS Lambda
+
+Experience:
+Senior Analytics Engineer with 7 years of experience
+supporting analytics projects, business reporting,
+data workflows, and stakeholder decision making.
+
+Education:
+Master of Science in Data Analytics

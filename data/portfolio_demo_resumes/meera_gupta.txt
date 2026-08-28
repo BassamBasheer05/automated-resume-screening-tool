@@ -1,0 +1,29 @@
+Meera Gupta
+Synthetic Resume - For Portfolio Demo Purposes Only
+Reporting Analyst
+
+Email: demo.candidate13@example.com
+Phone: 9000010013
+Location: India
+
+Professional Summary:
+Reporting Analyst with 3 years of experience
+working across analytics, data-driven decision making,
+reporting, automation, and technology-enabled business solutions.
+
+Skills:
+SQL
+Data Modeling
+Python
+Statistical Modeling
+Power BI
+Tableau
+QuickSight
+
+Experience:
+Reporting Analyst with 3 years of experience
+supporting analytics projects, business reporting,
+data workflows, and stakeholder decision making.
+
+Education:
+Bachelor of Commerce
