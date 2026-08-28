@@ -497,3 +497,44 @@ def test_more_than_500_resumes_is_rejected():
         "Maximum 500 resumes "
         "are allowed."
     )
+
+
+def test_parse_job_returns_required_skill_groups():
+    response = client.post(
+        "/parse-job",
+        json={
+            "job_description": """
+Basic Qualifications:
+- Knowledge of SQL or Python.
+- Knowledge of Excel.
+
+Preferred Qualifications:
+- Experience with Tableau.
+
+Minimum 2 years of experience.
+"""
+        }
+    )
+
+    assert response.status_code == 200
+
+    job_profile = response.json()[
+        "job_profile"
+    ]
+
+    assert job_profile[
+        "required_skill_groups"
+    ] == [
+        [
+            "sql",
+            "python",
+        ]
+    ]
+
+    assert set(
+        job_profile[
+            "required_skills"
+        ]
+    ) == {
+        "excel",
+    }

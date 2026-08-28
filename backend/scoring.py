@@ -7,18 +7,46 @@ def calculate_score_breakdown(
     match_result,
     job
 ):
-    total_required = len(
-        job["required_skills"]
+    independent_required = len(
+        job[
+            "required_skills"
+        ]
+    )
+
+    required_groups = len(
+        job.get(
+            "required_skill_groups",
+            []
+        )
+    )
+
+    total_required = (
+        independent_required
+        + required_groups
     )
 
     total_preferred = len(
-        job["preferred_skills"]
+        job[
+            "preferred_skills"
+        ]
     )
 
-    matched_required = len(
+    matched_independent_required = len(
         match_result[
             "matched_required_skills"
         ]
+    )
+
+    matched_required_groups = len(
+        match_result.get(
+            "matched_required_skill_groups",
+            []
+        )
+    )
+
+    matched_required = (
+        matched_independent_required
+        + matched_required_groups
     )
 
     matched_preferred = len(
@@ -42,32 +70,56 @@ def calculate_score_breakdown(
     active_weight = 0.0
 
     if total_required > 0:
-        active_weight += REQUIRED_WEIGHT
+        active_weight += (
+            REQUIRED_WEIGHT
+        )
 
     if total_preferred > 0:
-        active_weight += PREFERRED_WEIGHT
+        active_weight += (
+            PREFERRED_WEIGHT
+        )
 
     if minimum_experience > 0:
-        active_weight += EXPERIENCE_WEIGHT
+        active_weight += (
+            EXPERIENCE_WEIGHT
+        )
 
     # If the job parser found no usable
     # scoring criteria, return a zero score.
     if active_weight == 0:
         return {
             "required_skills": {
-                "matched": matched_required,
-                "total": total_required,
-                "match_percentage": 0.0,
-                "weight_percentage": 0.0,
-                "contribution_points": 0.0
+                "matched":
+                    matched_required,
+
+                "total":
+                    total_required,
+
+                "match_percentage":
+                    0.0,
+
+                "weight_percentage":
+                    0.0,
+
+                "contribution_points":
+                    0.0
             },
 
             "preferred_skills": {
-                "matched": matched_preferred,
-                "total": total_preferred,
-                "match_percentage": 0.0,
-                "weight_percentage": 0.0,
-                "contribution_points": 0.0
+                "matched":
+                    matched_preferred,
+
+                "total":
+                    total_preferred,
+
+                "match_percentage":
+                    0.0,
+
+                "weight_percentage":
+                    0.0,
+
+                "contribution_points":
+                    0.0
             },
 
             "experience": {
@@ -87,7 +139,8 @@ def calculate_score_breakdown(
                     0.0
             },
 
-            "final_score": 0.0
+            "final_score":
+                0.0
         }
 
     required_match_score = 0.0
@@ -281,20 +334,31 @@ def get_recommendation(
         ]
     )
 
+    missing_required_groups = (
+        match_result.get(
+            "missing_required_skill_groups",
+            []
+        )
+    )
+
     experience_met = (
         match_result[
             "experience_met"
         ]
     )
 
-    # Missing a minimum requirement prevents
-    # automatic Strong Match or Good Match.
+    # Missing any minimum requirement,
+    # including an unsatisfied alternative
+    # requirement group, prevents automatic
+    # Strong Match or Good Match.
     if (
         missing_required
+        or missing_required_groups
         or not experience_met
     ):
         if score >= 50:
             return "Review"
+
         else:
             return "Weak Match"
 
