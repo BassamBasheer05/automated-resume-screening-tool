@@ -48,6 +48,7 @@ EXAMPLE_CUE_PATTERNS = [
     r"\bfor example\b",
     r"\be\.g\.",
     r"\bincluding but not limited to\b",
+    r"\bincluding\b",
     r"\blike\b"
 ]
 

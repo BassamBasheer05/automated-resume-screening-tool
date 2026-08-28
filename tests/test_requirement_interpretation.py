@@ -139,3 +139,40 @@ Minimum 2 years of experience.
     assert "tableau" in result[
         "preferred_skills"
     ]
+
+
+def test_including_list_is_not_treated_as_independent_hard_requirements():
+    job_text = """
+Basic Qualifications:
+- Knowledge of standard software including
+  Excel, Oracle, SQL, and VBA.
+- Specialist-level SQL proficiency.
+- Python is mandatory.
+
+Preferred Qualifications:
+- Tableau.
+"""
+
+    result = parse_job_description(
+        job_text
+    )
+
+    assert "python" in result[
+        "required_skills"
+    ]
+
+    assert "sql" in result[
+        "required_skills"
+    ]
+
+    assert "excel" not in result[
+        "required_skills"
+    ]
+
+    assert "oracle" not in result[
+        "required_skills"
+    ]
+
+    assert "vba" not in result[
+        "required_skills"
+    ]
