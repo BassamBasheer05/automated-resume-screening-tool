@@ -1,5 +1,7 @@
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
+import os
+import secrets
 import shutil
 import uuid
 from pathlib import Path
@@ -8,11 +10,15 @@ from fastapi import (
     FastAPI,
     File,
     Form,
+    Header,
     HTTPException,
     UploadFile
 )
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import Headers
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from job_parser import parse_job_description
 from ranking import (
@@ -23,15 +29,97 @@ from ranking import (
 )
 
 
+MAX_RESUMES = 20
+MAX_FILE_BYTES = 2_000_000
+MAX_UPLOAD_BYTES = 20_000_000
+UPLOAD_LIMIT_MESSAGE = "The complete upload must be 20 MB or smaller."
+
+
+def get_allowed_origins():
+    origins = ["http://localhost:3000"]
+    frontend_url = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
+    if frontend_url and frontend_url not in origins:
+        origins.append(frontend_url)
+    return origins
+
+
+class ScreeningAccessMiddleware:
+    """Check access and bound the body before FastAPI parses resume uploads."""
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if (
+            scope["type"] != "http"
+            or scope["method"] != "POST"
+            or scope["path"].rstrip("/") not in {"/screen", "/screen-demo"}
+        ):
+            await self.app(scope, receive, send)
+            return
+
+        expected_password = os.environ.get("SCREENING_PASSWORD", "")
+        headers = Headers(scope=scope)
+        provided_password = headers.get("X-Screening-Password", "")
+        if not expected_password:
+            response = JSONResponse(
+                status_code=503,
+                content={"detail": "Screening access is not configured. Please try again later."},
+            )
+            await response(scope, receive, send)
+            return
+        if not secrets.compare_digest(
+            provided_password.encode("utf-8"), expected_password.encode("utf-8")
+        ):
+            response = JSONResponse(
+                status_code=401,
+                content={"detail": "Incorrect or missing screening password."},
+            )
+            await response(scope, receive, send)
+            return
+
+        content_length = headers.get("content-length")
+        if content_length is not None:
+            try:
+                declared_bytes = int(content_length)
+            except ValueError:
+                declared_bytes = -1
+            if declared_bytes < 0:
+                response = JSONResponse(
+                    status_code=400, content={"detail": "Invalid upload size."}
+                )
+                await response(scope, receive, send)
+                return
+            if declared_bytes > MAX_UPLOAD_BYTES:
+                response = JSONResponse(
+                    status_code=413, content={"detail": UPLOAD_LIMIT_MESSAGE}
+                )
+                await response(scope, receive, send)
+                return
+
+        received_bytes = 0
+
+        async def limited_receive() -> Message:
+            nonlocal received_bytes
+            message = await receive()
+            if message["type"] == "http.request":
+                received_bytes += len(message.get("body", b""))
+                if received_bytes > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail=UPLOAD_LIMIT_MESSAGE)
+            return message
+
+        await self.app(scope, limited_receive, send)
+
+
 app = FastAPI(
     title="Automated Resume Screening API",
     version="0.3.0"
 )
+app.add_middleware(ScreeningAccessMiddleware)
+# CORS wraps the access checks so browsers can read password/size errors too.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000"
-    ],
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,7 +160,10 @@ def parse_job(
 
 @app.post("/screen-demo")
 def screen_demo(
-    request: JobDescriptionRequest
+    request: JobDescriptionRequest,
+    screening_password: Annotated[
+        str | None, Header(alias="X-Screening-Password")
+    ] = None,
 ):
     job_text = request.job_description
 
@@ -167,10 +258,14 @@ def upload_test_page():
         <h1>Resume Screening Test</h1>
 
         <form
+            id="screening-form"
             action="/screen"
             method="post"
             enctype="multipart/form-data"
         >
+            <h3>Screening Password</h3>
+            <input id="screening-password" type="password" required>
+
             <h3>Job Description</h3>
 
             <textarea
@@ -196,6 +291,32 @@ def upload_test_page():
                 Screen Resumes
             </button>
         </form>
+        <pre id="screening-result" aria-live="polite"></pre>
+        <script>
+            document.getElementById("screening-form").addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const result = document.getElementById("screening-result");
+                const button = event.currentTarget.querySelector("button");
+                const formData = new FormData(event.currentTarget);
+                button.disabled = true;
+                result.textContent = "Screening...";
+                try {
+                    const response = await fetch("/screen", {
+                        method: "POST",
+                        headers: {
+                            "X-Screening-Password": document.getElementById("screening-password").value
+                        },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    result.textContent = response.ok ? JSON.stringify(data, null, 2) : data.detail;
+                } catch (error) {
+                    result.textContent = "Could not reach the screening service. Please try again.";
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        </script>
     </body>
     </html>
     """
@@ -210,7 +331,10 @@ async def screen_uploaded_resumes(
     resumes: Annotated[
         list[UploadFile],
         File()
-    ]
+    ],
+    screening_password: Annotated[
+        str | None, Header(alias="X-Screening-Password")
+    ] = None,
 ):
     if not job_description.strip():
         raise HTTPException(
@@ -224,11 +348,18 @@ async def screen_uploaded_resumes(
             detail="At least one resume is required."
         )
 
-    if len(resumes) > 500:
+    if len(resumes) > MAX_RESUMES:
         raise HTTPException(
             status_code=400,
-            detail="Maximum 500 resumes are allowed."
+            detail="Maximum 20 resumes are allowed."
         )
+
+    # Validate every submitted file, including duplicates and unsupported types.
+    for upload in resumes:
+        if upload.size is not None and upload.size > MAX_FILE_BYTES:
+            raise HTTPException(
+                status_code=413, detail="Each resume must be 2 MB or smaller."
+            )
 
     supported_extensions = {
         ".txt",
@@ -297,7 +428,11 @@ async def screen_uploaded_resumes(
                     )
                 )
 
-            file_content = await upload.read()
+            file_content = await upload.read(MAX_FILE_BYTES + 1)
+            if len(file_content) > MAX_FILE_BYTES:
+                raise HTTPException(
+                    status_code=413, detail="Each resume must be 2 MB or smaller."
+                )
 
             destination.write_bytes(
                 file_content
@@ -318,18 +453,18 @@ async def screen_uploaded_resumes(
 
         job_text = job_description
 
-        job = parse_job_description(
-            job_text
-        )
+        job = await run_in_threadpool(parse_job_description, job_text)
 
         unique_resume_paths, duplicates = (
-            remove_duplicate_files(
+            await run_in_threadpool(
+                remove_duplicate_files,
                 saved_resume_paths
             )
         )
 
         rankings, failures, statistics = (
-            rank_candidates(
+            await run_in_threadpool(
+                rank_candidates,
                 unique_resume_paths,
                 job,
                 job_text

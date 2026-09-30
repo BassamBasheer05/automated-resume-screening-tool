@@ -1,9 +1,21 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from api import app
 
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def configure_screening_password(monkeypatch):
+    password = "test-screening-password"
+    monkeypatch.setenv("SCREENING_PASSWORD", password)
+    monkeypatch.setitem(
+        client.headers,
+        "X-Screening-Password",
+        password,
+    )
 
 
 JOB_TEXT = """

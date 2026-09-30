@@ -1,7 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+
+
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+  (process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:8000"
+    : "")
+).replace(/\/+$/, "");
+
+const MAX_RESUMES = 20;
+const MAX_FILE_BYTES = 2_000_000;
+const MAX_UPLOAD_BYTES = 20_000_000;
+const HEALTH_WAIT_MS = 3 * 60 * 1000;
+const HEALTH_REQUEST_TIMEOUT_MS = 10_000;
+const HEALTH_RETRY_MS = 3_000;
+
+type ServiceStatus =
+  | "checking"
+  | "ready"
+  | "unavailable"
+  | "configuration-error";
+
+
+function waitForHealthRetry(
+  milliseconds: number,
+  signal: AbortSignal
+) {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+
+    const finish = () => {
+      window.clearTimeout(timer);
+      signal.removeEventListener("abort", finish);
+      resolve();
+    };
+
+    const timer = window.setTimeout(finish, milliseconds);
+    signal.addEventListener("abort", finish, { once: true });
+  });
+}
 
 
 type SkillScoreBreakdown = {
@@ -174,6 +217,113 @@ export default function Home() {
   const [error, setError] =
     useState("");
 
+  const [password, setPassword] =
+    useState("");
+
+  const [serviceStatus, setServiceStatus] =
+    useState<ServiceStatus>(
+      API_URL ? "checking" : "configuration-error"
+    );
+
+  const healthCheckController =
+    useRef<AbortController | null>(null);
+
+  const screeningController =
+    useRef<AbortController | null>(null);
+
+
+  const checkBackendReady = useCallback(async () => {
+    healthCheckController.current?.abort();
+
+    if (!API_URL) {
+      setServiceStatus("configuration-error");
+      return false;
+    }
+
+    const controller = new AbortController();
+    healthCheckController.current = controller;
+    const deadline = Date.now() + HEALTH_WAIT_MS;
+    setServiceStatus("checking");
+
+    try {
+      while (
+        !controller.signal.aborted &&
+        Date.now() < deadline
+      ) {
+        const attempt = new AbortController();
+        const abortAttempt = () => attempt.abort();
+        controller.signal.addEventListener(
+          "abort", abortAttempt, { once: true }
+        );
+        const timeout = window.setTimeout(
+          abortAttempt,
+          Math.min(
+            HEALTH_REQUEST_TIMEOUT_MS,
+            deadline - Date.now()
+          )
+        );
+
+        try {
+          const response = await fetch(`${API_URL}/health`, {
+            cache: "no-store",
+            signal: attempt.signal
+          });
+          const health: unknown = response.ok
+            ? await response.json()
+            : null;
+
+          if (controller.signal.aborted) {
+            return false;
+          }
+
+          if (
+            response.ok &&
+            typeof health === "object" &&
+            health !== null &&
+            "status" in health &&
+            health.status === "healthy"
+          ) {
+            setServiceStatus("ready");
+            return true;
+          }
+        } catch {
+          // A sleeping service can time out or return a loading page.
+        } finally {
+          window.clearTimeout(timeout);
+          controller.signal.removeEventListener("abort", abortAttempt);
+        }
+
+        await waitForHealthRetry(
+          Math.min(HEALTH_RETRY_MS, Math.max(0, deadline - Date.now())),
+          controller.signal
+        );
+      }
+
+      if (!controller.signal.aborted) {
+        setServiceStatus("unavailable");
+      }
+      return false;
+    } finally {
+      if (healthCheckController.current === controller) {
+        healthCheckController.current = null;
+      }
+    }
+  }, []);
+
+
+  useEffect(() => {
+    // Scheduling also lets Strict Mode cancel its first mount cleanly.
+    const startup = window.setTimeout(() => {
+      void checkBackendReady();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(startup);
+      healthCheckController.current?.abort();
+      screeningController.current?.abort();
+    };
+  }, [checkBackendReady]);
+
   const [
     expandedCandidate,
     setExpandedCandidate
@@ -272,6 +422,10 @@ export default function Home() {
 
 
   async function handleScreen() {
+    if (screeningController.current) {
+      return;
+    }
+
     setError("");
 
     if (!jobDescription.trim()) {
@@ -288,19 +442,39 @@ export default function Home() {
       return;
     }
 
-    if (files.length > 500) {
+    if (!password) {
       setError(
-        "Maximum 500 resumes are allowed."
+        "Please enter the shared password."
       );
       return;
     }
 
-    setLoading(true);
-    setResults(null);
-    setExpandedCandidate(null);
-    setSearchTerm("");
-    setRecommendationFilter("All");
-    setCurrentPage(1);
+    if (files.length > MAX_RESUMES) {
+      setError(
+        "Maximum 20 resumes are allowed."
+      );
+      return;
+    }
+
+    const oversizedFile = files.find(
+      (file) => file.size > MAX_FILE_BYTES
+    );
+
+    if (oversizedFile) {
+      setError(`${oversizedFile.name} is larger than 2 MB.`);
+      return;
+    }
+
+    if (
+      files.reduce((total, file) => total + file.size, 0) >
+      MAX_UPLOAD_BYTES
+    ) {
+      setError("The complete upload must be no larger than 20 MB.");
+      return;
+    }
+
+    const controller = new AbortController();
+    screeningController.current = controller;
 
     try {
       const formData =
@@ -318,34 +492,87 @@ export default function Home() {
         );
       });
 
+      // Encode once so the size includes the job text and upload data.
+      const upload = new Request(`${API_URL}/screen`, {
+        method: "POST",
+        body: formData
+      });
+      const uploadBody = await upload.blob();
+
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      if (uploadBody.size > MAX_UPLOAD_BYTES) {
+        setError(
+          "The complete upload, including the job description, must be no larger than 20 MB."
+        );
+        return;
+      }
+
+      const ready = await checkBackendReady();
+      if (!ready || controller.signal.aborted) {
+        return;
+      }
+
+      setLoading(true);
+      setResults(null);
+      setExpandedCandidate(null);
+      setSearchTerm("");
+      setRecommendationFilter("All");
+      setCurrentPage(1);
+
       const response =
         await fetch(
-          "http://127.0.0.1:8000/screen",
+          `${API_URL}/screen`,
           {
             method: "POST",
-            body: formData
+            headers: {
+              "X-Screening-Password": password,
+              "Content-Type": upload.headers.get("Content-Type")!
+            },
+            body: uploadBody,
+            signal: controller.signal
           }
         );
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const errorData =
-          await response.json();
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("Incorrect password. Please try again.");
+        }
+
+        if (response.status === 413) {
+          throw new Error(
+            "This upload is too large. Use files up to 2 MB each and keep the complete upload within 20 MB."
+          );
+        }
 
         throw new Error(
-          errorData.detail ||
+          (typeof data?.detail === "string" && data.detail) ||
             "Screening failed."
         );
       }
 
-      const data: ScreeningResponse =
-        await response.json();
+      if (!data || !Array.isArray(data.ranked_candidates)) {
+        throw new Error(
+          "The screening service did not return results. Please try again."
+        );
+      }
 
       setResults(data);
 
     } catch (err) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
       if (err instanceof Error) {
         setError(
-          err.message
+          err instanceof TypeError
+            ? "Unable to reach the screening service. Please try again."
+            : err.message
         );
       } else {
         setError(
@@ -354,7 +581,12 @@ export default function Home() {
       }
 
     } finally {
-      setLoading(false);
+      if (screeningController.current === controller) {
+        screeningController.current = null;
+      }
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
   }
 
@@ -649,8 +881,9 @@ export default function Home() {
 
               <p className="mt-1 text-sm text-slate-500">
                 Upload PDF, DOCX, or TXT
-                resumes. Maximum 500 files
-                per screening.
+                resumes. Maximum 20 files,
+                2 MB per file, and 20 MB
+                for the complete upload.
               </p>
 
             </div>
@@ -741,6 +974,59 @@ export default function Home() {
         </section>
 
 
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4">
+          <label
+            htmlFor="screening-password"
+            className="block text-sm font-semibold"
+          >
+            Shared password
+          </label>
+          <input
+            id="screening-password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="off"
+            placeholder="Enter the password shared with you"
+            className="mt-2 w-full rounded-lg border border-slate-300 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:max-w-md"
+          />
+        </div>
+
+
+        {serviceStatus !== "ready" && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900"
+          >
+            {serviceStatus === "checking" && (
+              <p>Starting the screening service, please wait</p>
+            )}
+            {serviceStatus === "unavailable" && (
+              <>
+                <p>
+                  The screening service is taking longer than expected.
+                  Please try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void checkBackendReady()}
+                  className="mt-3 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
+                >
+                  Retry
+                </button>
+              </>
+            )}
+            {serviceStatus === "configuration-error" && (
+              <p>
+                The screening service address has not been configured.
+                Please contact the person who shared this tool.
+              </p>
+            )}
+          </div>
+        )}
+
+
         {error && (
 
           <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -755,7 +1041,7 @@ export default function Home() {
           <button
             type="button"
             onClick={handleScreen}
-            disabled={loading}
+            disabled={loading || serviceStatus !== "ready"}
             className="rounded-xl bg-blue-600 px-7 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {loading
